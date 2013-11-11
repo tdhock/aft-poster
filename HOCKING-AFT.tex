@@ -1,0 +1,186 @@
+\documentclass[11pt,twocolumn,a4paper]{article}
+
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage[cm]{fullpage}
+\usepackage{amsmath,amssymb}
+\newcommand{\RR}{\mathbb R}
+
+\begin{document}
+
+\begin{center}
+  \textbf{Accelerated Failure Time models\\(parametric survival regression)}
+
+toby@sg.cs.titech.ac.jp \\\textbf{Toby Dylan Hocking} \\30 Sept 2013
+\end{center}
+
+\thispagestyle{empty}
+
+This is a class of models for
+
+\begin{itemize}
+\item several inputs $x_i\in\RR^p$,
+\item using incomplete information about the outputs $y_i\in\RR^+$,
+  meaning that sometimes we know only an interval of possible values
+  $y_i\in(\underline y_i, \overline y_i)$,
+\item assuming a distribution for the outputs such as
+  $y_i\sim \text{LogNormal}(\mu_i, 1)$ or $y_i\sim
+  \text{LogLogistic}(\alpha_i, 2)$ in the examples plotted below,
+\item where the real-valued scale parameter $\mu_i= w' x_i$ or
+  $\log\alpha_i=w'x_i$ is assumed to be a linear combination of the
+  inputs,
+\item and the center (mean or median) of the distribution is used as a
+  predicted value $\hat y = f(x)\in\RR^+$.
+\end{itemize}
+
+Maximum likelihood inference is then performed on the variable weights
+$w$. The only trick is that there is a non-standard likelihood
+function, since we have incomplete information for the outputs $y_i$:
+
+\begin{itemize}
+\item If we observe the complete output value $y_i$, as in the right
+  panel in the plot below, then the likelihood function is the
+  \textbf{density} $d(y_i, \hat y)$, e.g. for the LogNormal.$\sigma$
+  distribution,
+  \begin{equation}
+    \label{eq:lognormal}
+    d(y_i, \hat y) = 
+    \frac{1}{\hat y\sigma\sqrt{2\pi}}\exp\left(
+      \frac{(\log y_i - \log \hat y)^2}{-2\sigma^2}
+    \right)
+  \end{equation}
+  (more functions on the back for those who are interested)
+\item If we observe only an interval $y_i\in(\underline y_i, \overline
+  y_i)$, as in the left panel in the plot below, then the likelihood
+  function is the \textbf{cumulative distribution function}
+  $\int_{\underline y_i}^{\overline y_i} d(y, \hat y)\, dy$, which is
+  often available in closed form (it is not closed-form for the
+  LogNormal, but we can still evaluate it numerically).
+\end{itemize}
+
+\input{figure-loss}
+
+%\newpage
+
+These models can be used for predicting
+\begin{itemize}
+\item Survival times of patients $i$ that are treated for the same
+  disease. Inputs $x_i$ are age at diagnosis, blood pressure, tumor
+  size, etc. Output $y_i$ is the survival time after treatment. There
+  are two cases at the time of the statistical analysis: (a) patient
+  $i$ has died, so we observe $y_i$, or (b) patient $i$ is still
+  alive, so we observe $y_i\in(t_i,\infty)$ where $t_i$ is the time
+  patient $i$ has survived so far.
+\item Penalties for related segmentation problems $i$, such as
+  $\lambda_i\in\RR^+$ in $\min_z \text{Cost}_i(z) + \lambda_i\
+  \text{Penalty}(z)$. Weak/incomplete labels about breakpoint
+  locations do not indicate any single output $\lambda_i$ value, but
+  instead provide an interval
+  $\lambda_i\in(\underline\lambda_i,\overline \lambda_i)$ of optimal output
+  values, and I used features $x_i$ of the segmentation problem such
+  as number of points to segment and estimated variance. For more info
+  see my ICML 2013 paper ``Learning Sparse Penalties for Change-point
+  Detection...''
+\end{itemize}
+
+\textbf{Every concave maximum likelihood problem can also be thought
+  of as a minimization of some convex loss function.} In machine
+learning we focus on getting accurate predictions $\hat y$, so in the
+plot below we show the loss function in terms of the predicted values
+$L_i(\hat y)$. Note that there is a nuisance/shape parameter, such as
+the standard deviation $\sigma$ in (\ref{eq:lognormal}), which affects
+the shape of the plotted loss function but does not affect the
+stationary point of the optimization with respect to $w$.
+
+\textbf{Which distribution is better, LogNormal or LogLogistic?} There
+are other distributions (Weibull, any other positive-valued
+distribution, see back of this page), so how to choose which one is
+best? It depends on your data, so first define an evaluation metric
+such as the zero-one loss, and then use the distribution which gives
+the lowest prediction error on a held-out test set of data.
+
+\textbf{Free/open-source implementation}: \texttt{survreg()} function
+in R package \texttt{survival}.
+
+\newpage
+
+\begin{table*}[t!]
+
+  In survival analysis we have data $(t_i,x_i,\delta_i)$ for a set of
+  patients $i\in\{1,\dots,n\}$. Like in usual regression, $x_i\in\RR^m$
+  is a vector of input variables. However, we observe a time $t_i\in\RR^+$ and
+  $\delta_i\in\{1=\text{death},0=\text{censor}\}$ which are related to the actual survival time $y_i\in\RR^+$ as
+  follows:
+\begin{equation}
+  \label{eq:t_i}
+  t_i =
+  \begin{cases}
+    \text{the amount of time patient $i$ lived} 
+    & \Rightarrow y_i = t_i \text{ if
+    }\delta_i=1=\text{death}\\
+    \text{the amount of time until the study ended}
+&\Rightarrow y_i > t_i  \text{ if }\delta_i=0=\text{censor}.
+  \end{cases}
+\end{equation}
+So if $\delta_i=0=\text{censor}$, all we know is that the survival of
+patient $i$ is at least $t_i$. So the likelihood can be written as
+\begin{equation}
+  \label{eq:surv_lik}
+\prod_{\delta_i=1=\text{death}} d(t_i) \prod_{\delta_i=0=\text{death}} s(t_i) =
+\prod_{i=1}^n s(t_i) h(t_i)^{\delta_i}
+\end{equation}
+where $d$ is the density function, $s(t)=1-F(t)$ is the survival function,
+$F$ is the cumulative distribution function, and $h$ is the hazard function.
+Thus the log likelihood is
+\begin{equation*}
+\sum_{i=1}^n\underbrace{\log s(t_i) + \delta_i \log h(t_i) }_{\log\text{lik}_i}
+\end{equation*}
+
+\begin{center}
+\begin{tabular}{ccc}
+  Distribution & $-\log\text{lik}_i$ & Link \\
+  \hline
+  Exponential($\lambda_i$) & 
+  $\lambda_i t_i - \delta_i \log \lambda_i$ &
+  $\lambda_i = \exp w'x_i$\\
+  Log-Logistic($\alpha_i, \beta$) &
+  $(1+\delta)\log\left[1+ (t_i/\alpha_i)^\beta\right]
+  -\delta\log(\beta t^{\beta-1} \alpha_i^{-\beta})$ &
+  $\alpha_i = \exp w'x_i$\\
+  Weibull($\gamma_i,k$) &
+  $(t_i/\gamma_i)^k 
+  -\delta_i\left[
+    \log(k/\gamma_i) + (k-1)\log(t_i/\gamma_i)
+  \right]$ &
+  $\gamma_i = \exp w'x_i$\\
+  Log-Normal($\mu_i, \sigma$) & 
+  $-\log s(t_i)=1/2+\operatorname{erf}\left[
+    \log(t_i/\mu_i)/(\sigma\sqrt{2})
+  \right]$ &
+  $\mu_i = w'x_i$
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{cllcc}
+  Distribution & Prediction & $\hat t_i$ & 
+  Surrogate loss $L(\delta,t,\hat t)$ \\
+  \hline
+  Exp($\lambda_i$) & Mean & $\lambda_i^{-1}$ &
+  $t/\hat t + \delta\log\hat t$ \\
+  Log-Logistic($\alpha_i, \beta$) & Median&  $\alpha_i$ &
+  $(1+\delta)\log\left[1+ (t_i/\hat t)^\beta\right]
+  -\delta\log(\beta t^{\beta-1} \hat t^{-\beta})$ \\
+  Weibull($\gamma_i,k$) & Mean &  $\gamma_i$ &
+  $(t/\hat t)^k - \delta\log(\hat t^{-1} k t^{k-1})$ \\
+  Log-normal($\mu_i, \sigma$) &
+  Mean & $\exp \mu_i$ & 
+  $-\log S(t_i)=1/2+\operatorname{erf}\left[
+    \log(t_i/\hat t_i)/(\sigma\sqrt{2})
+  \right]$ 
+\end{tabular}
+\end{center}
+
+\end{table*}
+
+\end{document}
