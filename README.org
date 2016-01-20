@@ -1,0 +1,2 @@
+[[file:HOCKING-AFT.pdf][My single-page]] explanation of Accelerated Failure Time models (longer
+reference: [[https://en.wikipedia.org/wiki/Accelerated_failure_time_model][wikipedia]]).
