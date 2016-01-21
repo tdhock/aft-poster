@@ -126,11 +126,12 @@ So if $\delta_i=0=\text{censor}$, all we know is that the survival of
 patient $i$ is at least $t_i$. So the likelihood can be written as
 \begin{equation}
   \label{eq:surv_lik}
-\prod_{\delta_i=1=\text{death}} d(t_i) \prod_{\delta_i=0=\text{death}} s(t_i) =
+\prod_{\delta_i=1=\text{death}} d(t_i) \prod_{\delta_i=0=\text{censor}} s(t_i) =
 \prod_{i=1}^n s(t_i) h(t_i)^{\delta_i}
 \end{equation}
 where $d$ is the density function, $s(t)=1-F(t)$ is the survival function,
-$F$ is the cumulative distribution function, and $h$ is the hazard function.
+$F$ is the cumulative distribution function, and $h$ 
+is the hazard function ($h=d/s$).
 Thus the log likelihood is
 \begin{equation*}
 \sum_{i=1}^n\underbrace{\log s(t_i) + \delta_i \log h(t_i) }_{\log\text{lik}_i}
@@ -144,8 +145,8 @@ Thus the log likelihood is
   $\lambda_i t_i - \delta_i \log \lambda_i$ &
   $\lambda_i = \exp w'x_i$\\
   Log-Logistic($\alpha_i, \beta$) &
-  $(1+\delta)\log\left[1+ (t_i/\alpha_i)^\beta\right]
-  -\delta\log(\beta t^{\beta-1} \alpha_i^{-\beta})$ &
+  $(1+\delta_i)\log\left[1+ (t_i/\alpha_i)^\beta\right]
+  -\delta_i\log(\beta t^{\beta-1} \alpha_i^{-\beta})$ &
   $\alpha_i = \exp w'x_i$\\
   Weibull($\gamma_i,k$) &
   $(t_i/\gamma_i)^k 
@@ -169,17 +170,30 @@ Thus the log likelihood is
   Exp($\lambda_i$) & Mean & $\lambda_i^{-1}$ &
   $t/\hat t + \delta\log\hat t$ \\
   Log-Logistic($\alpha_i, \beta$) & Median&  $\alpha_i$ &
-  $(1+\delta)\log\left[1+ (t_i/\hat t)^\beta\right]
+  $(1+\delta)\log\left[1+ (t/\hat t)^\beta\right]
   -\delta\log(\beta t^{\beta-1} \hat t^{-\beta})$ \\
   Weibull($\gamma_i,k$) & Mean &  $\gamma_i$ &
   $(t/\hat t)^k - \delta\log(\hat t^{-1} k t^{k-1})$ \\
   Log-normal($\mu_i, \sigma$) &
   Mean & $\exp \mu_i$ & 
-  $-\log S(t_i)=1/2+\operatorname{erf}\left[
-    \log(t_i/\hat t_i)/(\sigma\sqrt{2})
+  $-\log s(t)=1/2+\operatorname{erf}\left[
+    \log(t/\hat t)/(\sigma\sqrt{2})
   \right]$ 
 \end{tabular}
 \end{center}
+
+\textbf{Exercise for the reader:}
+consider the more general case of
+real-valued interval output data, 
+e.g. $y_1=(-\infty, 4)$, $y_2=(-3, \infty)$, $y_3=(-1, 2)$, $y_4=(5, 5)$.
+Instead of using one of these positive-valued distributions,
+consider an equivalent real-valued distribution
+(e.g. logistic rather than log-logistic).
+Write the maximum likelihood problem,
+derive the equivalent convex minimization problem,
+and write the surrogate loss $L(\underline y_i, \overline y_i, \hat t)$.
+What is the gradient of the surrogate loss with respect to the 
+optimization variables $w$?
 
 \end{table*}
 
