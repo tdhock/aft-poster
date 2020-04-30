@@ -19,8 +19,8 @@ dist.list <- list(
     logistic=function(z)exp(z)/(1+exp(z))^2,
     extreme=function(z)exp(z)*exp(-exp(z))))
 log.data.list <- list(
-  censored=c(lower=-2.5, upper=3.5),
-  uncensored=c(uncensored=-1.2))
+  censored=c(lower=-3.2, upper=3.2),
+  uncensored=c(uncensored=-0.5))
 lik.fun.list <- list(
   censored=function(dt)dt[, F.or.f_upper-F.or.f_lower],
   uncensored=function(dt)dt[, F.or.f_uncensored/s/exp(label_uncensored)])
@@ -33,7 +33,7 @@ for(label.type in names(log.data.list)){
     label.type, label=y, label.name=names(y))
   d.list <- dist.list[[label.type]]
   lik.fun <- lik.fun.list[[label.type]]
-  pred.vec <- seq(-10, 10, by=0.1)
+  pred.vec <- seq(-13, 13, by=0.1)
   grid.dt <- data.table(expand.grid(
     label.name=names(y),
     prediction=pred.vec))
@@ -68,7 +68,11 @@ label.dt[, label.tex := sprintf(
 label.dt[, y := -1]
 label.dt[, point := "label"]
 label.dt[, hjust := ifelse(label.name=="upper", 0, 1)]
-label.dt[, offset := ifelse(label.name=="upper", 0.7, -0.7)]
+off.vec <- c(
+  lower=-0.5,
+  upper=0.5,
+  uncensored=-2)
+label.dt[, offset := off.vec[label.name] ]
 min.dt[, point := "min loss"]
 p <- ggplot()+
   theme_bw()+
@@ -83,6 +87,7 @@ p <- ggplot()+
     data=label.dt)+
   geom_text(aes(
     label+offset, y, label=label.tex, hjust=hjust),
+    size=3,
     vjust=-0.1,
     data=label.dt)+
   coord_cartesian(ylim=c(NA, 10))+
@@ -103,7 +108,7 @@ p <- ggplot()+
   scale_y_continuous(
     "Loss $\\ell_{\\text{AFT}}(y, \\hat y)$\n(negative log likelihood)")
 h <- 2
-w <- 6
+w <- 5.5
 tikz("figure-loss-new-alone.tex",h=h,w=w, standAlone = TRUE)
 print(p)
 dev.off()
