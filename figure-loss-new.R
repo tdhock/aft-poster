@@ -102,8 +102,11 @@ p <- ggplot()+
     "Predicted value $\\hat y$")+
   scale_y_continuous(
     "Loss $\\ell_{\\text{AFT}}(y, \\hat y)$\n(negative log likelihood)")
-tikz("figure-loss-new.tex",h=2.1,w=7, standAlone = TRUE)
+tikz("figure-loss-new-alone.tex",h=2.1,w=7, standAlone = TRUE)
 print(p)
 dev.off()
-system("pdflatex figure-loss-new")
+system("pdflatex figure-loss-new-alone")
 
+tikz("figure-loss-new.tex",h=2.1,w=7)
+print(p)
+dev.off()
